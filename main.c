@@ -16,7 +16,7 @@ int main(int argc, char** argv)
 
     mario->orientation = 1;
     mario->stepCount = 0;
-    mario->jumpCount = 10;
+    mario->jumpCount = 9;
     mario->isJumping = false;
     mario->isWalkingLeft = false;
     mario->isWalkingRight = false;
@@ -45,9 +45,27 @@ int main(int argc, char** argv)
     SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surfaceFond);
     SDL_free(surfaceFond);
 
+    SDL_Rect fond;
+    fond.x = 0;
+    fond.y = 0;
+    fond.h = 300;
+    fond.w = 800;
+
+    SDL_Rect fond2;
+    fond2.x = 800;
+    fond2.y = 0;
+    fond2.h = 300;
+    fond2.w = 800;
+
+    SDL_Rect fond3;
+    fond3.x = 1600;
+    fond3.y = 0;
+    fond3.h = 300;
+    fond3.w = 800;
+
     SDL_Surface *surfaceMario = SDL_LoadBMP("src/mario_droite.bmp");
     SDL_Texture *textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
-    SDL_Rect dest = { 320 - surfaceMario->w/2,240 - surfaceMario->h/2, 50, 50}; //un SDL_Rect qui sers de destination à l'image
+    SDL_Rect dest = {320 - surfaceMario->w/2, 240 - surfaceMario->h/2, 50, 50}; //un SDL_Rect qui sers de destination à l'image
     mario->rect = dest;
     mario->x = &mario->rect.x;
     mario->y = &mario->rect.y;
@@ -67,7 +85,9 @@ int main(int argc, char** argv)
 
     while (continuer)
     {
-        SDL_RenderCopy(renderer, texture, NULL, NULL);
+        SDL_RenderCopy(renderer, texture, NULL, &fond);
+        SDL_RenderCopy(renderer, texture, NULL, &fond2);
+        SDL_RenderCopy(renderer, texture, NULL, &fond3);
         SDL_RenderCopy(renderer, textureMario, NULL, &mario->rect);
         SDL_RenderCopy(renderer, textureGoomba, NULL, &goomba);
         SDL_RenderPresent(renderer);
@@ -119,7 +139,15 @@ int main(int argc, char** argv)
         }
 
         if(mario->isWalkingRight == true){
-            *mario->x += 10;
+            if(*mario->x == 500){
+                fond.x -= 10;
+                fond2.x -= 10;
+                fond3.x -= 10;
+                goomba.x -= 10;
+            }
+            else
+                *mario->x += 10;
+
             mario->orientation = 1;
 
             if(mario->isJumping == false){
@@ -138,10 +166,19 @@ int main(int argc, char** argv)
                     mario->stepCount++;
                 }
             }
+        
         }
 
         if(mario->isWalkingLeft == true){
-            *mario->x -= 10;
+            if(*mario->x == 300){
+                fond.x += 10;
+                fond2.x += 10;
+                fond3.x += 10;
+                goomba.x += 10;
+            }
+            else
+                *mario->x -= 10;
+            
             mario->orientation = -1;
 
             if(mario->isJumping == false){
@@ -175,7 +212,7 @@ int main(int argc, char** argv)
             }
 
             neg = 1;
-            if(mario->jumpCount >= -10){
+            if(mario->jumpCount >= -9){
                 if(mario->jumpCount < 0)
                     neg = -1;
                 int valeur = (pow(mario->jumpCount, 2))*0.5 * neg;
@@ -184,7 +221,7 @@ int main(int argc, char** argv)
             }
             else{
                 mario->isJumping = false;
-                mario->jumpCount = 10;
+                mario->jumpCount = 9;
 
                 if(mario->orientation == 1){
                     surfaceMario = SDL_LoadBMP("src/mario_droite.bmp");
@@ -200,7 +237,7 @@ int main(int argc, char** argv)
         }
 
         if(SDL_HasIntersection(&mario->rect, &goomba)){
-            fprintf(stderr, "Maxi chibre");
+            fprintf(stderr, "Personnage touché");
         }
 
         SDL_Delay(30); 
