@@ -4,19 +4,26 @@
 #include <math.h>
 #include <SDL2/SDL.h>
 #include "personnage.h"
+#include "bloc.h"
 
-int main(int argc, char** argv)
-{
-
+int main(int argc, char** argv){
+    int valeur;
+    bool endOfJump = false;
     int neg = 1;
     int continuer = 1;
+    int nextYPosition;
+    Bloc **tableauBlocsChances = malloc(sizeof(Bloc) * 4);
+    //ne pas oublier de free à la fin + free chaque malloc sur les struct Bloc
 
     Perso *mario;
     mario = malloc(sizeof(Perso));
 
+    SDL_Rect rectNull = {-1, -1, -1, -1};
+    mario->block = &rectNull;
     mario->orientation = 1;
     mario->stepCount = 0;
     mario->jumpCount = 9;
+    mario->isTouchingBlock = false;
     mario->isJumping = false;
     mario->isWalkingLeft = false;
     mario->isWalkingRight = false;
@@ -41,8 +48,9 @@ int main(int argc, char** argv)
     SDL_Event event;
 
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
     SDL_Surface * surfaceFond = SDL_LoadBMP("src/fond.bmp");
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surfaceFond);
+    SDL_Texture *textureFond = SDL_CreateTextureFromSurface(renderer, surfaceFond);
     SDL_free(surfaceFond);
 
     SDL_Rect fond;
@@ -65,33 +73,88 @@ int main(int argc, char** argv)
 
     SDL_Surface *surfaceMario = SDL_LoadBMP("src/mario_droite.bmp");
     SDL_Texture *textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
-    SDL_Rect dest = {320 - surfaceMario->w/2, 240 - surfaceMario->h/2, 50, 50}; //un SDL_Rect qui sers de destination à l'image
-    mario->rect = dest;
+    SDL_Rect dest = {0, 0, 50, 50}; //un SDL_Rect qui sert de destination à l'image
+    mario->rect = dest; //Est-ce que ça va surcharger la ram ?
     mario->x = &mario->rect.x;
     mario->y = &mario->rect.y;
 
     SDL_Surface *surfaceGoomba = SDL_LoadBMP("src/goomba.bmp");
     SDL_Texture *textureGoomba = SDL_CreateTextureFromSurface(renderer, surfaceGoomba);
-    SDL_Rect goomba = {320 - surfaceGoomba->w/2, 240 - surfaceGoomba->h/2, 50, 50};
     SDL_free(surfaceGoomba);
+    SDL_Rect goomba = {0, 0, 40, 40};
 
     goomba.x = 200;
-    goomba.y = 225;
+    goomba.y = 235;
 
     SDL_free(surfaceMario);
  
     *mario->x = 10;
     *mario->y = 230;
 
+    SDL_Surface *surfaceBlocChance = SDL_LoadBMP("src/bloc_chance.bmp");
+
+    Bloc *blocChance;
+    blocChance = malloc(sizeof(Bloc));
+
+    blocChance->x = &blocChance->fond.x;
+    blocChance->y = &blocChance->fond.y;
+    blocChance->texture = SDL_CreateTextureFromSurface(renderer, surfaceBlocChance);
+    SDL_Rect rectBlocChance = {450, 150, 35, 35};
+    blocChance->fond = rectBlocChance;
+    tableauBlocsChances[0] = blocChance;
+
+    Bloc *blocChance2;
+    blocChance2 = malloc(sizeof(Bloc));
+
+    blocChance2->x = &blocChance2->fond.x;
+    blocChance2->y = &blocChance2->fond.y;
+    blocChance2->texture = SDL_CreateTextureFromSurface(renderer, surfaceBlocChance);
+    SDL_Rect rectBlocChance2 = {500, 150, 35, 35};
+    blocChance2->fond = rectBlocChance2;
+    tableauBlocsChances[1] = blocChance2;
+
+    Bloc *blocChance3;
+    blocChance3 = malloc(sizeof(Bloc));
+
+    blocChance3->x = &blocChance3->fond.x;
+    blocChance3->y = &blocChance3->fond.y;
+    blocChance3->texture = SDL_CreateTextureFromSurface(renderer, surfaceBlocChance);
+    SDL_Rect rectBlocChance3 = {600, 150, 35, 35};
+    blocChance3->fond = rectBlocChance3;
+    tableauBlocsChances[2] = blocChance3;
+
+    Bloc *blocChance4;
+    blocChance4 = malloc(sizeof(Bloc));
+
+    blocChance4->x = &blocChance4->fond.x;
+    blocChance4->y = &blocChance4->fond.y;
+    blocChance4->texture = SDL_CreateTextureFromSurface(renderer, surfaceBlocChance);
+    SDL_Rect rectBlocChance4 = {700, 150, 35, 35};
+    blocChance4->fond = rectBlocChance4;
+    tableauBlocsChances[3] = blocChance4;
+
+    SDL_FreeSurface(surfaceBlocChance);
+
     while (continuer)
     {
-        SDL_RenderCopy(renderer, texture, NULL, &fond);
-        SDL_RenderCopy(renderer, texture, NULL, &fond2);
-        SDL_RenderCopy(renderer, texture, NULL, &fond3);
+
+        SDL_RenderCopy(renderer, textureFond, NULL, &fond);
+        SDL_RenderCopy(renderer, textureFond, NULL, &fond2);
+        SDL_RenderCopy(renderer, textureFond, NULL, &fond3);
         SDL_RenderCopy(renderer, textureMario, NULL, &mario->rect);
         SDL_RenderCopy(renderer, textureGoomba, NULL, &goomba);
+        //SDL_RenderCopy(renderer, textureBlocChance, NULL, &blocChance->fond);
+        for(int i = 0; i <= 3; i++){
+            SDL_RenderCopy(renderer, tableauBlocsChances[i]->texture, NULL, &(tableauBlocsChances[i]->fond));
+        }
+
         SDL_RenderPresent(renderer);
         SDL_RenderClear(renderer);
+
+
+        if(SDL_HasIntersection(&mario->rect, &goomba)){
+            fprintf(stderr, "Personnage touché");
+        }
 
         SDL_PollEvent(&event);
 
@@ -139,113 +202,194 @@ int main(int argc, char** argv)
         }
 
         if(mario->isWalkingRight == true){
-            if(*mario->x == 500){
-                fond.x -= 10;
-                fond2.x -= 10;
-                fond3.x -= 10;
-                goomba.x -= 10;
-            }
-            else
-                *mario->x += 10;
+            *mario->x += 10;
 
-            mario->orientation = 1;
-
-            if(mario->isJumping == false){
-                if(mario->stepCount%2 == 0)
-                {
-                    surfaceMario = SDL_LoadBMP("src/mario_droite.bmp");
-                    textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
-                    SDL_free(surfaceMario);
-                    mario->stepCount++;
-                }
-                else if (mario->stepCount%2 == 1)
-                {
-                    surfaceMario = SDL_LoadBMP("src/mario_droite1.bmp");
-                    textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
-                    SDL_free(surfaceMario);
-                    mario->stepCount++;
+            mario->isTouchingBlock = false;
+            for(int i = 0; i <= 3; i++){
+                if(SDL_HasIntersection(&mario->rect, &(tableauBlocsChances[i]->fond))){
+                    *mario->x -= 10;
+                    mario->isTouchingBlock = true;
+                    break;
                 }
             }
-        
+
+            if(!(mario->isTouchingBlock)){
+                *mario->x -= 10;
+                if(*mario->x == 500 && fond.x > -1600){
+                    fond.x -= 10;
+                    fond2.x -= 10;
+                    fond3.x -= 10;
+                    goomba.x -= 10;
+                    for(int i = 0; i <= 3; i++){
+                        *tableauBlocsChances[i]->x -= 10;
+                    }
+                }
+                else{
+                    if(*mario->x < 750)
+                        *mario->x += 10;
+                }
+                    
+
+                mario->orientation = 1;
+
+                if(mario->isJumping == false){
+                    if(mario->stepCount%2 == 0)
+                    {
+                        surfaceMario = SDL_LoadBMP("src/mario_droite.bmp");
+                        textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
+                        SDL_free(surfaceMario);
+                        mario->stepCount++;
+                    }
+                    else if (mario->stepCount%2 == 1)
+                    {
+                        surfaceMario = SDL_LoadBMP("src/mario_droite1.bmp");
+                        textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
+                        SDL_free(surfaceMario);
+                        mario->stepCount++;
+                    }
+                }
+            }        
         }
 
         if(mario->isWalkingLeft == true){
-            if(*mario->x == 300){
-                fond.x += 10;
-                fond2.x += 10;
-                fond3.x += 10;
-                goomba.x += 10;
-            }
-            else
-                *mario->x -= 10;
-            
-            mario->orientation = -1;
+            *mario->x -= 10;
 
-            if(mario->isJumping == false){
-                if (mario->stepCount%2 == 0)
-                {
-                    surfaceMario = SDL_LoadBMP("src/mario_gauche.bmp");
-                    textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
-                    SDL_free(surfaceMario);
-                    mario->stepCount++;
+            mario->isTouchingBlock = false;
+            for(int i = 0; i <= 3; i++){
+                if(SDL_HasIntersection(&mario->rect, &(tableauBlocsChances[i]->fond))){
+                    *mario->x -= 10;
+                    mario->isTouchingBlock = true;
+                    break;
                 }
-                else if (mario->stepCount%2 == 1)
-                {
-                    surfaceMario = SDL_LoadBMP("src/mario_gauche1.bmp");
-                    textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
-                    SDL_free(surfaceMario);
-                    mario->stepCount++;
+            }
+
+            if(!(mario->isTouchingBlock)){
+                *mario->x += 10;
+
+                if(*mario->x == 300 && fond.x < 0){
+                    fond.x += 10;
+                    fond2.x += 10;
+                    fond3.x += 10;
+                    goomba.x += 10;
+                    for(int i = 0; i <= 3; i++){
+                        *tableauBlocsChances[i]->x += 10;
+                    }
                 }
+                else{
+                    if(*mario->x > 0)
+                        *mario->x -= 10;
+                }
+                    
+                
+                mario->orientation = -1;
+
+                if(mario->isJumping == false){
+                    if (mario->stepCount%2 == 0)
+                    {
+                        surfaceMario = SDL_LoadBMP("src/mario_gauche.bmp");
+                        textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
+                        SDL_free(surfaceMario);
+                        mario->stepCount++;
+                    }
+                    else if (mario->stepCount%2 == 1)
+                    {
+                        surfaceMario = SDL_LoadBMP("src/mario_gauche1.bmp");
+                        textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
+                        SDL_free(surfaceMario);
+                        mario->stepCount++;
+                    }
+                }
+            }
+        }
+
+        if(!(mario->block->x == -1)){ //Si le bloc sur lequel était mario est un bloc avec lequel il peut interagir (blocChance)
+            if(!(*mario->x <= mario->block->x + 35 && *mario->x + 50 >= mario->block->x)){
+                if(mario->isJumping == false){
+                    mario->isJumping = true;
+                    mario->jumpCount = -2; 
+                }
+                mario->block = &rectNull;
             }
         }
 
         if(mario->isJumping == true){
-            if(mario->orientation == 1){
-                surfaceMario = SDL_LoadBMP("src/mario_saut_droit.bmp");
-                textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
-                SDL_free(surfaceMario);
-            }
-            else if(mario->orientation == -1){
-                surfaceMario = SDL_LoadBMP("src/mario_saut_gauche.bmp");
-                textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
-                SDL_free(surfaceMario);
-            }
-
             neg = 1;
-            if(mario->jumpCount >= -9){
-                if(mario->jumpCount < 0)
-                    neg = -1;
-                int valeur = (pow(mario->jumpCount, 2))*0.5 * neg;
-                *mario->y -= valeur;
-                mario->jumpCount -= 1;
+            if(mario->jumpCount < 0)
+                neg = -1;
+
+
+            valeur = (pow(mario->jumpCount, 2))*0.5 * neg;
+            *mario->y -= valeur;
+
+            //Gestions collisions
+
+            if(mario->jumpCount < 0){
+                if(*mario->y  > 230){
+                    endOfJump = true;
+                    *mario->y = 230;
+                }
+
+                for(int i = 0; i <= 3; i++){
+                    if(SDL_HasIntersection(&mario->rect, &(tableauBlocsChances[i]->fond))){
+                        endOfJump = true;
+                        *mario->y = *tableauBlocsChances[i]->y - mario->rect.h;
+                        mario->block = &tableauBlocsChances[i]->fond;
+                    }
+                }
             }
             else{
-                mario->isJumping = false;
-                mario->jumpCount = 9;
-
+                for(int i = 0; i <= 3; i++){
+                    if(SDL_HasIntersection(&mario->rect, &(tableauBlocsChances[i]->fond))){
+                        if(*mario->y <= *tableauBlocsChances[i]->y + 35 && *mario->y >= *tableauBlocsChances[i]->y){
+                            mario->jumpCount = -1;
+                            *mario->y = *tableauBlocsChances[i]->y + 35;
+                        }
+                    }
+                }
+            }
+                
+            if(!endOfJump){
                 if(mario->orientation == 1){
-                    surfaceMario = SDL_LoadBMP("src/mario_droite.bmp");
+                    surfaceMario = SDL_LoadBMP("src/mario_saut_droit.bmp");
                     textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
                     SDL_free(surfaceMario);
                 }
                 else if(mario->orientation == -1){
-                    surfaceMario = SDL_LoadBMP("src/mario_gauche.bmp");
+                    surfaceMario = SDL_LoadBMP("src/mario_saut_gauche.bmp");
                     textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
                     SDL_free(surfaceMario);
                 }
+
+                mario->jumpCount -= 1;
             }
+
         }
 
-        if(SDL_HasIntersection(&mario->rect, &goomba)){
-            fprintf(stderr, "Personnage touché");
+        if(endOfJump){
+            mario->isJumping = false;
+            mario->jumpCount = 9;
+
+            if(mario->orientation == 1){
+                surfaceMario = SDL_LoadBMP("src/mario_droite.bmp");
+                textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
+                SDL_free(surfaceMario);
+            }
+            else if(mario->orientation == -1){
+                surfaceMario = SDL_LoadBMP("src/mario_gauche.bmp");
+                textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
+                SDL_free(surfaceMario);
+            }
+
+            endOfJump = false;
         }
 
-        SDL_Delay(30); 
+        SDL_Delay(30);
+        
     }
 
     SDL_DestroyTexture(textureMario);
     free(mario);
-    SDL_DestroyTexture(texture);
+    SDL_DestroyTexture(textureFond);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
