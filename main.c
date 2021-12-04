@@ -12,8 +12,11 @@ int main(int argc, char** argv){
     int neg = 1;
     int continuer = 1;
     int nextYPosition;
-    Bloc **tableauBlocsChances = malloc(sizeof(Bloc) * 4);
+    int nombreBlocsChances = 6;
+    Bloc **tableauBlocsChances = malloc(sizeof(Bloc) * nombreBlocsChances);
     //ne pas oublier de free à la fin + free chaque malloc sur les struct Bloc
+
+    int positionsBlocChances[6] = {450, 600, 750, 785, 950, 1100};
 
     Perso *mario;
     mario = malloc(sizeof(Perso));
@@ -93,6 +96,20 @@ int main(int argc, char** argv){
 
     SDL_Surface *surfaceBlocChance = SDL_LoadBMP("src/bloc_chance.bmp");
 
+    for(int i = 0; i < nombreBlocsChances; i++){
+        Bloc *blocChance;
+        blocChance = malloc(sizeof(Bloc));
+
+        blocChance->x = &blocChance->fond.x;
+        blocChance->y = &blocChance->fond.y;
+        blocChance->texture = SDL_CreateTextureFromSurface(renderer, surfaceBlocChance);
+        SDL_Rect rectBlocChance = {positionsBlocChances[i], 150, 35, 35};
+        blocChance->fond = rectBlocChance;
+        tableauBlocsChances[i] = blocChance;
+
+    }
+
+    /*
     Bloc *blocChance;
     blocChance = malloc(sizeof(Bloc));
 
@@ -132,6 +149,7 @@ int main(int argc, char** argv){
     SDL_Rect rectBlocChance4 = {700, 150, 35, 35};
     blocChance4->fond = rectBlocChance4;
     tableauBlocsChances[3] = blocChance4;
+    */
 
     SDL_FreeSurface(surfaceBlocChance);
 
@@ -144,7 +162,7 @@ int main(int argc, char** argv){
         SDL_RenderCopy(renderer, textureMario, NULL, &mario->rect);
         SDL_RenderCopy(renderer, textureGoomba, NULL, &goomba);
         //SDL_RenderCopy(renderer, textureBlocChance, NULL, &blocChance->fond);
-        for(int i = 0; i <= 3; i++){
+        for(int i = 0; i < nombreBlocsChances; i++){
             SDL_RenderCopy(renderer, tableauBlocsChances[i]->texture, NULL, &(tableauBlocsChances[i]->fond));
         }
 
@@ -205,7 +223,7 @@ int main(int argc, char** argv){
             *mario->x += 10;
 
             mario->isTouchingBlock = false;
-            for(int i = 0; i <= 3; i++){
+            for(int i = 0; i < nombreBlocsChances; i++){
                 if(SDL_HasIntersection(&mario->rect, &(tableauBlocsChances[i]->fond))){
                     *mario->x -= 10;
                     mario->isTouchingBlock = true;
@@ -220,7 +238,7 @@ int main(int argc, char** argv){
                     fond2.x -= 10;
                     fond3.x -= 10;
                     goomba.x -= 10;
-                    for(int i = 0; i <= 3; i++){
+                    for(int i = 0; i < nombreBlocsChances; i++){
                         *tableauBlocsChances[i]->x -= 10;
                     }
                 }
@@ -255,9 +273,9 @@ int main(int argc, char** argv){
             *mario->x -= 10;
 
             mario->isTouchingBlock = false;
-            for(int i = 0; i <= 3; i++){
+            for(int i = 0; i < nombreBlocsChances; i++){
                 if(SDL_HasIntersection(&mario->rect, &(tableauBlocsChances[i]->fond))){
-                    *mario->x -= 10;
+                    *mario->x += 10;
                     mario->isTouchingBlock = true;
                     break;
                 }
@@ -271,7 +289,7 @@ int main(int argc, char** argv){
                     fond2.x += 10;
                     fond3.x += 10;
                     goomba.x += 10;
-                    for(int i = 0; i <= 3; i++){
+                    for(int i = 0; i < nombreBlocsChances; i++){
                         *tableauBlocsChances[i]->x += 10;
                     }
                 }
@@ -329,7 +347,7 @@ int main(int argc, char** argv){
                     *mario->y = 230;
                 }
 
-                for(int i = 0; i <= 3; i++){
+                for(int i = 0; i < nombreBlocsChances; i++){
                     if(SDL_HasIntersection(&mario->rect, &(tableauBlocsChances[i]->fond))){
                         endOfJump = true;
                         *mario->y = *tableauBlocsChances[i]->y - mario->rect.h;
@@ -338,7 +356,7 @@ int main(int argc, char** argv){
                 }
             }
             else{
-                for(int i = 0; i <= 3; i++){
+                for(int i = 0; i < nombreBlocsChances; i++){
                     if(SDL_HasIntersection(&mario->rect, &(tableauBlocsChances[i]->fond))){
                         if(*mario->y <= *tableauBlocsChances[i]->y + 35 && *mario->y >= *tableauBlocsChances[i]->y){
                             mario->jumpCount = -1;
