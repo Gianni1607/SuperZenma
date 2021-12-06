@@ -8,6 +8,12 @@
 			"args": []
 		},
 		{
+			"label": "Compile C",
+			"type": "shell",
+			"command": "gcc '${file}' -o '${fileDirname}/${fileBasenameNoExtension}' && '${fileDirname}/${fileBasenameNoExtension}' && echo $1",
+			"args": []
+		},
+		{
 			"type": "cppbuild",
 			"label": "C/C++: gcc générer le fichier actif",
 			"command": "/usr/bin/gcc",
