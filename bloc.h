@@ -5,6 +5,7 @@
 typedef struct Bloc{
     SDL_Rect fond;
     SDL_Texture *texture;
+    int type;
     int *x;
     int *y;
 

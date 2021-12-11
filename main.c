@@ -6,19 +6,37 @@
 #include "personnage.h"
 #include "bloc.h"
 
+Bloc ** change_size(Bloc **tab, int *taille, int indice){
+    *taille -= 1;
+    Bloc **tab2 = malloc(sizeof(Bloc *) * *taille);
+    int j = 0;
+
+    for(int i = 0; i < *taille; i++){
+        if(!(i == indice)){
+            tab2[j] = tab[i];
+            j++;
+        }
+    }
+
+    return tab2;
+}
+
 int main(int argc, char** argv){
 
     SDL_Window *window = NULL;
 
     int valeur;
+    Bloc **tabTemporaire;
     bool endOfJump = false;
     int neg = 1;
+    int j = 0;
     int continuer = 1;
     int nextYPosition;
     int nombreBlocsChances = 6;
     int nombreBlocsBriques = 3;
+    int nombreBlocs = nombreBlocsChances + nombreBlocsBriques;
 
-    Bloc **tableauBlocsChances = malloc(sizeof(Bloc) * (nombreBlocsChances + nombreBlocsBriques));
+    Bloc **tableauBlocsChances = malloc(sizeof(Bloc *) * nombreBlocs);
     //ne pas oublier de free à la fin + free chaque malloc sur les struct Bloc
 
     int positionsBlocsChances[6] = {450, 600, 750, 785, 950, 1100};
@@ -27,8 +45,10 @@ int main(int argc, char** argv){
     Perso *mario;
     mario = malloc(sizeof(Perso));
 
+
     SDL_Rect rectNull = {-1, -1, -1, -1};
     mario->block = &rectNull;
+    mario->indiceBlock = -1;
     mario->orientation = 1;
     mario->stepCount = 0;
     mario->jumpCount = 9;
@@ -106,6 +126,7 @@ int main(int argc, char** argv){
 
         blocChance->x = &blocChance->fond.x;
         blocChance->y = &blocChance->fond.y;
+        blocChance->type = 1;
         blocChance->texture = SDL_CreateTextureFromSurface(renderer, surfaceBlocChance);
         SDL_Rect rectBlocChance = {positionsBlocsChances[i], 150, 35, 35};
         blocChance->fond = rectBlocChance;
@@ -123,8 +144,9 @@ int main(int argc, char** argv){
 
         blocBrique->x = &blocBrique->fond.x;
         blocBrique->y = &blocBrique->fond.y;
+        blocBrique->type = 2;
         blocBrique->texture = SDL_CreateTextureFromSurface(renderer, surfaceBlocBrique);
-        SDL_Rect rectBlocBrique = {positionsBlocsBriques[i], 240, 35, 35};
+        SDL_Rect rectBlocBrique = {positionsBlocsBriques[i], 150, 35, 35};
         blocBrique->fond = rectBlocBrique;
         tableauBlocsChances[i + nombreBlocsChances - 1] = blocBrique;
 
@@ -132,40 +154,6 @@ int main(int argc, char** argv){
 
     SDL_FreeSurface(surfaceBlocBrique);
 
-    /*
-    Bloc *blocChance;
-    blocChance = malloc(sizeof(Bloc));
-    blocChance->x = &blocChance->fond.x;
-    blocChance->y = &blocChance->fond.y;
-    blocChance->texture = SDL_CreateTextureFromSurface(renderer, surfaceBlocChance);
-    SDL_Rect rectBlocChance = {450, 150, 35, 35};
-    blocChance->fond = rectBlocChance;
-    tableauBlocsChances[0] = blocChance;
-    Bloc *blocChance2;
-    blocChance2 = malloc(sizeof(Bloc));
-    blocChance2->x = &blocChance2->fond.x;
-    blocChance2->y = &blocChance2->fond.y;
-    blocChance2->texture = SDL_CreateTextureFromSurface(renderer, surfaceBlocChance);
-    SDL_Rect rectBlocChance2 = {500, 150, 35, 35};
-    blocChance2->fond = rectBlocChance2;
-    tableauBlocsChances[1] = blocChance2;
-    Bloc *blocChance3;
-    blocChance3 = malloc(sizeof(Bloc));
-    blocChance3->x = &blocChance3->fond.x;
-    blocChance3->y = &blocChance3->fond.y;
-    blocChance3->texture = SDL_CreateTextureFromSurface(renderer, surfaceBlocChance);
-    SDL_Rect rectBlocChance3 = {600, 150, 35, 35};
-    blocChance3->fond = rectBlocChance3;
-    tableauBlocsChances[2] = blocChance3;
-    Bloc *blocChance4;
-    blocChance4 = malloc(sizeof(Bloc));
-    blocChance4->x = &blocChance4->fond.x;
-    blocChance4->y = &blocChance4->fond.y;
-    blocChance4->texture = SDL_CreateTextureFromSurface(renderer, surfaceBlocChance);
-    SDL_Rect rectBlocChance4 = {700, 150, 35, 35};
-    blocChance4->fond = rectBlocChance4;
-    tableauBlocsChances[3] = blocChance4;
-    */
 
     while (continuer)
     {
@@ -175,8 +163,8 @@ int main(int argc, char** argv){
         SDL_RenderCopy(renderer, textureFond, NULL, &fond3);
         SDL_RenderCopy(renderer, textureMario, NULL, &mario->rect);
         SDL_RenderCopy(renderer, textureGoomba, NULL, &goomba);
-        //SDL_RenderCopy(renderer, textureBlocChance, NULL, &blocChance->fond);
-        for(int i = 0; i < nombreBlocsChances + nombreBlocsBriques - 1; i++){
+
+        for(int i = 0; i < nombreBlocs - 1; i++){
             SDL_RenderCopy(renderer, tableauBlocsChances[i]->texture, NULL, &(tableauBlocsChances[i]->fond));
         }
 
@@ -185,7 +173,7 @@ int main(int argc, char** argv){
 
 
         if(SDL_HasIntersection(&mario->rect, &goomba)){
-            fprintf(stderr, "Personnage touché");
+            fprintf(stderr, "Personnage touché\n");
         }
 
         SDL_PollEvent(&event);
@@ -237,7 +225,7 @@ int main(int argc, char** argv){
             *mario->x += 10;
 
             mario->isTouchingBlock = false;
-            for(int i = 0; i < nombreBlocsChances + nombreBlocsBriques - 1; i++){
+            for(int i = 0; i < nombreBlocs - 1; i++){
                 if(SDL_HasIntersection(&mario->rect, &(tableauBlocsChances[i]->fond))){
                     *mario->x -= 10;
                     mario->isTouchingBlock = true;
@@ -252,7 +240,7 @@ int main(int argc, char** argv){
                     fond2.x -= 10;
                     fond3.x -= 10;
                     goomba.x -= 10;
-                    for(int i = 0; i < nombreBlocsChances + nombreBlocsBriques - 1; i++){
+                    for(int i = 0; i < nombreBlocs - 1; i++){
                         *tableauBlocsChances[i]->x -= 10;
                     }
                 }
@@ -289,7 +277,7 @@ int main(int argc, char** argv){
             *mario->x -= 10;
 
             mario->isTouchingBlock = false;
-            for(int i = 0; i < nombreBlocsChances + nombreBlocsBriques - 1; i++){
+            for(int i = 0; i < nombreBlocs - 1; i++){
                 if(SDL_HasIntersection(&mario->rect, &(tableauBlocsChances[i]->fond))){
                     *mario->x += 10;
                     mario->isTouchingBlock = true;
@@ -305,7 +293,7 @@ int main(int argc, char** argv){
                     fond2.x += 10;
                     fond3.x += 10;
                     goomba.x += 10;
-                    for(int i = 0; i < nombreBlocsChances + nombreBlocsBriques - 1; i++){
+                    for(int i = 0; i <  nombreBlocs - 1; i++){
                         *tableauBlocsChances[i]->x += 10;
                     }
                 }
@@ -364,7 +352,7 @@ int main(int argc, char** argv){
                     *mario->y = 230;
                 }
 
-                for(int i = 0; i < nombreBlocsChances + nombreBlocsBriques - 1; i++){
+                for(int i = 0; i < nombreBlocs - 1; i++){
                     if(SDL_HasIntersection(&mario->rect, &(tableauBlocsChances[i]->fond))){
                         endOfJump = true;
                         *mario->y = *tableauBlocsChances[i]->y - mario->rect.h;
@@ -373,11 +361,13 @@ int main(int argc, char** argv){
                 }
             }
             else{
-                for(int i = 0; i < nombreBlocsChances; i++){
+                for(int i = 0; i < nombreBlocs - 1; i++){
                     if(SDL_HasIntersection(&mario->rect, &(tableauBlocsChances[i]->fond))){
                         if(*mario->y <= *tableauBlocsChances[i]->y + 35 && *mario->y >= *tableauBlocsChances[i]->y){
                             mario->jumpCount = -1;
                             *mario->y = *tableauBlocsChances[i]->y + 35;
+                            if(tableauBlocsChances[i]->type == 2)
+                                mario->indiceBlock = i;
                         }
                     }
                 }
@@ -398,6 +388,21 @@ int main(int argc, char** argv){
                 }
 
                 mario->jumpCount -= 1;
+
+                if(!(mario->indiceBlock == -1)){
+                    tabTemporaire = change_size(tableauBlocsChances, &nombreBlocs, mario->indiceBlock);
+
+                    free(tableauBlocsChances[mario->indiceBlock]);
+                    free(tableauBlocsChances);
+
+                    tableauBlocsChances = malloc(sizeof(Bloc *) * nombreBlocs);
+
+                    for(int i = 0; i < nombreBlocs; i++)
+                        tableauBlocsChances[i] = tabTemporaire[i];
+
+                    free(tabTemporaire);
+                    mario->indiceBlock = -1;
+                }
             }
 
         }
