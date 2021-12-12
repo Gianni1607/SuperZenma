@@ -34,15 +34,16 @@ int main(int argc, char** argv){
     int nextYPosition;
     int nombreBlocsChances = 6;
     int nombreBlocsBriques = 3;
-    int nombreBlocsPierres = 1;
+    int nombreBlocsPierres = 20;
     int nombreBlocs = nombreBlocsChances + nombreBlocsBriques + nombreBlocsPierres;
 
     Bloc **tableauBlocs = malloc(sizeof(Bloc *) * nombreBlocs);
 
+    //Faire une boucle for qui permet de disposer les bloc_pierre en forme d'escalier gauche et droit
     int positionsBlocsChances[6] = {450, 600, 750, 785, 950, 1100};
     int positionsBlocsBriques[3] = {350, 400, 500};
-    int positionsBlocsPierresX[1] = {1600};
-    int positionsBlocsPierresY[1] = {240}; 
+    int positionsBlocsPierresX[20] = {1600, 1635, 1670, 1705, 1635, 1670, 1705, 1670, 1705, 1705, 1960, 1960, 1995, 1960, 1995, 2030, 1960, 1995, 2030, 2065};
+    int positionsBlocsPierresY[20] = {240, 240, 240, 240, 205, 205, 205, 170, 170, 135, 135, 170, 170, 205, 205, 205, 240, 240, 240, 240}; 
 
     Perso *mario;
     mario = malloc(sizeof(Perso));
@@ -174,12 +175,13 @@ int main(int argc, char** argv){
         SDL_Rect rectBlocPierre = {positionsBlocsPierresX[i], positionsBlocsPierresY[i], 35, 35};
         blocPierre->fond = rectBlocPierre;
         tableauBlocs[i + nombreBlocsChances + nombreBlocsBriques] = blocPierre;
-        fprintf(stderr, "Position : %i\n", i  + nombreBlocsChances + nombreBlocsBriques);
-
-
     }
-
     SDL_FreeSurface(surfaceBlocPierre);
+
+    SDL_Surface *surfaceFondBleu = SDL_LoadBMP("src/fond_bleu.bmp");
+    SDL_Texture *textureFondBleu = SDL_CreateTextureFromSurface(renderer, surfaceFondBleu);
+    SDL_FreeSurface(surfaceFondBleu);
+    SDL_Rect rectFondBleu = {1740, 240, 220, 70};
 
 
     while (continuer)
@@ -190,6 +192,7 @@ int main(int argc, char** argv){
         SDL_RenderCopy(renderer, textureFond, NULL, &fond3);
         SDL_RenderCopy(renderer, textureMario, NULL, &mario->rect);
         SDL_RenderCopy(renderer, textureGoomba, NULL, &goomba);
+        SDL_RenderCopy(renderer, textureFondBleu, NULL, &rectFondBleu);
 
         for(int i = 0; i < nombreBlocs; i++){
             SDL_RenderCopy(renderer, tableauBlocs[i]->texture, NULL, &(tableauBlocs[i]->fond));
@@ -267,6 +270,7 @@ int main(int argc, char** argv){
                     fond2.x -= 10;
                     fond3.x -= 10;
                     goomba.x -= 10;
+                    rectFondBleu.x -= 10;
                     for(int i = 0; i < nombreBlocs; i++){
                         *tableauBlocs[i]->x -= 10;
                     }
@@ -320,6 +324,7 @@ int main(int argc, char** argv){
                     fond2.x += 10;
                     fond3.x += 10;
                     goomba.x += 10;
+                    rectFondBleu.x += 10;
                     for(int i = 0; i <  nombreBlocs; i++){
                         *tableauBlocs[i]->x += 10;
                     }
