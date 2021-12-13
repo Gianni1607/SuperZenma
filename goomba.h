@@ -5,6 +5,7 @@
 typedef struct Goomba{
     SDL_Rect fond;
     SDL_Texture *texture;
+    int stepCount;
     int orientation;
     int *x;
     int *y;

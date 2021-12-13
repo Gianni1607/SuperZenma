@@ -120,7 +120,7 @@ int main(int argc, char** argv){
     mario->x = &mario->rect.x;
     mario->y = &mario->rect.y;
 
-    SDL_Surface *surfaceGoomba = SDL_LoadBMP("src/goomba.bmp");
+    SDL_Surface *surfaceGoomba = SDL_LoadBMP("src/goomba_droit.bmp");
 
     for(int i = 0; i < nombreGoombas; i++){
         Goomba *goomba;
@@ -128,6 +128,7 @@ int main(int argc, char** argv){
 
         goomba->x = &goomba->fond.x;
         goomba->y = &goomba->fond.y;
+        goomba->stepCount = 0;
 
         if(i%2){
             goomba->orientation = 1;
@@ -160,7 +161,6 @@ int main(int argc, char** argv){
         SDL_Rect rectBlocChance = {positionsBlocsChances[i], 150, 35, 35};
         blocChance->fond = rectBlocChance;
         tableauBlocs[i] = blocChance;
-
     }
 
     SDL_FreeSurface(surfaceBlocChance);
@@ -178,7 +178,6 @@ int main(int argc, char** argv){
         SDL_Rect rectBlocBrique = {positionsBlocsBriques[i], 150, 35, 35};
         blocBrique->fond = rectBlocBrique;
         tableauBlocs[i + nombreBlocsChances] = blocBrique;
-
     }
 
     SDL_FreeSurface(surfaceBlocBrique);
@@ -308,16 +307,14 @@ int main(int argc, char** argv){
                 mario->orientation = 1;
 
                 if(mario->isJumping == false){
-                    if(mario->stepCount%2 == 0)
-                    {
+                    if(mario->stepCount%4 == 0 || mario->stepCount%4 == 1){
                         SDL_DestroyTexture(textureMario);
                         surfaceMario = SDL_LoadBMP("src/mario_droite.bmp");
                         textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
                         SDL_FreeSurface(surfaceMario);
                         mario->stepCount++;
                     }
-                    else if (mario->stepCount%2 == 1)
-                    {
+                    else if(mario->stepCount%4 == 2 || mario->stepCount%4 == 3){
                         SDL_DestroyTexture(textureMario);
                         surfaceMario = SDL_LoadBMP("src/mario_droite1.bmp");
                         textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
@@ -488,9 +485,22 @@ int main(int argc, char** argv){
         }
 
         for(int i = 0; i < nombreGoombas; i++){
-           *tableauGoombas[i]->x += tableauGoombas[i]->orientation * 3;
+            *tableauGoombas[i]->x += tableauGoombas[i]->orientation * 3;
+            if(tableauGoombas[i]->stepCount%4 == 0 || tableauGoombas[i]->stepCount%4 == 1){
+                SDL_DestroyTexture(tableauGoombas[i]->texture);
+                surfaceGoomba = SDL_LoadBMP("src/goomba_gauche.bmp");
+                tableauGoombas[i]->texture = SDL_CreateTextureFromSurface(renderer, surfaceGoomba);
+                SDL_FreeSurface(surfaceGoomba);
+                tableauGoombas[i]->stepCount++;
+            }
+                else if(tableauGoombas[i]->stepCount%4 == 2 || tableauGoombas[i]->stepCount%4 == 3){
+                SDL_DestroyTexture(tableauGoombas[i]->texture);
+                surfaceGoomba = SDL_LoadBMP("src/goomba_droit.bmp");
+                tableauGoombas[i]->texture = SDL_CreateTextureFromSurface(renderer, surfaceGoomba);
+                SDL_FreeSurface(surfaceGoomba);
+                tableauGoombas[i]->stepCount++;
+            }
        }
-
 
         for(int i = 0; i < nombreGoombas; i++){
             for(int j = 0; j < nombreBlocsPierres; j++){
@@ -508,9 +518,8 @@ int main(int argc, char** argv){
             }
         }
 
-        if(SDL_HasIntersection(&(mario->rect), &rectFondBleu)){
+        if(SDL_HasIntersection(&(mario->rect), &rectFondBleu))
             mort = true;
-        }
 
         if(mort){
             SDL_DestroyTexture(textureMario);
@@ -525,7 +534,6 @@ int main(int argc, char** argv){
                 game_over = true;
             }
         }
-
 
         SDL_Delay(30);
         
