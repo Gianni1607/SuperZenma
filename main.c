@@ -136,7 +136,6 @@ int main(int argc, char** argv){
         SDL_Rect rectBlocChance = {positionsBlocsChances[i], 150, 35, 35};
         blocChance->fond = rectBlocChance;
         tableauBlocs[i] = blocChance;
-        fprintf(stderr, "Position : %i\n", i);
 
     }
 
@@ -155,7 +154,6 @@ int main(int argc, char** argv){
         SDL_Rect rectBlocBrique = {positionsBlocsBriques[i], 150, 35, 35};
         blocBrique->fond = rectBlocBrique;
         tableauBlocs[i + nombreBlocsChances] = blocBrique;
-        fprintf(stderr, "Position : %i\n", i  + nombreBlocsChances);
 
     }
 
@@ -190,9 +188,9 @@ int main(int argc, char** argv){
         SDL_RenderCopy(renderer, textureFond, NULL, &fond);
         SDL_RenderCopy(renderer, textureFond, NULL, &fond2);
         SDL_RenderCopy(renderer, textureFond, NULL, &fond3);
+        SDL_RenderCopy(renderer, textureFondBleu, NULL, &rectFondBleu);
         SDL_RenderCopy(renderer, textureMario, NULL, &mario->rect);
         SDL_RenderCopy(renderer, textureGoomba, NULL, &goomba);
-        SDL_RenderCopy(renderer, textureFondBleu, NULL, &rectFondBleu);
 
         for(int i = 0; i < nombreBlocs; i++){
             SDL_RenderCopy(renderer, tableauBlocs[i]->texture, NULL, &(tableauBlocs[i]->fond));
