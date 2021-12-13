@@ -21,10 +21,10 @@ void fin()
     SDL_RenderCopy(rendererFin, textureFin, NULL, NULL);
     SDL_RenderPresent(rendererFin);
     SDL_RenderClear(rendererFin);
+    SDL_Event event;
 
     while(cont)
     {
-        SDL_Event event;
         SDL_PollEvent(&event);
 
         switch(event.type)
