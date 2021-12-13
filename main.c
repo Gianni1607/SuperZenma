@@ -4,6 +4,7 @@
 #include <math.h>
 #include <SDL2/SDL.h>
 #include "personnage.h"
+#include "goomba.h"
 #include "bloc.h"
 
 Bloc **change_size(Bloc **tab, int *taille, int indice){
@@ -36,14 +37,17 @@ int main(int argc, char** argv){
     int nombreBlocsBriques = 3;
     int nombreBlocsPierres = 20;
     int nombreBlocs = nombreBlocsChances + nombreBlocsBriques + nombreBlocsPierres;
+    int nombreGoombas = 5;
 
     Bloc **tableauBlocs = malloc(sizeof(Bloc *) * nombreBlocs);
+    Goomba **tableauGoombas = malloc(sizeof(Goomba *) * nombreGoombas);
 
     //Faire une boucle for qui permet de disposer les bloc_pierre en forme d'escalier gauche et droit
     int positionsBlocsChances[6] = {450, 600, 750, 785, 950, 1100};
     int positionsBlocsBriques[3] = {350, 400, 500};
     int positionsBlocsPierresX[20] = {1600, 1635, 1670, 1705, 1635, 1670, 1705, 1670, 1705, 1705, 1960, 1960, 1995, 1960, 1995, 2030, 1960, 1995, 2030, 2065};
     int positionsBlocsPierresY[20] = {240, 240, 240, 240, 205, 205, 205, 170, 170, 135, 135, 170, 170, 205, 205, 205, 240, 240, 240, 240}; 
+    int positionsGoombas[5] = {200, 400, 1000, 2300, 3000};
 
     Perso *mario;
     mario = malloc(sizeof(Perso));
@@ -105,18 +109,32 @@ int main(int argc, char** argv){
 
     SDL_Surface *surfaceMario = SDL_LoadBMP("src/mario_droite.bmp");
     SDL_Texture *textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
-    SDL_Rect dest = {0, 0, 50, 50}; //un SDL_Rect qui sert de destination à l'image
-    mario->rect = dest; //Est-ce que ça va surcharger la ram ?
+    SDL_Rect dest = {0, 0, 50, 50};
+    mario->rect = dest;
     mario->x = &mario->rect.x;
     mario->y = &mario->rect.y;
 
     SDL_Surface *surfaceGoomba = SDL_LoadBMP("src/goomba.bmp");
-    SDL_Texture *textureGoomba = SDL_CreateTextureFromSurface(renderer, surfaceGoomba);
-    SDL_free(surfaceGoomba);
-    SDL_Rect goomba = {0, 0, 40, 40};
 
-    goomba.x = 200;
-    goomba.y = 235;
+    for(int i = 0; i < nombreGoombas; i++){
+        Goomba *goomba;
+        goomba = malloc(sizeof(Goomba));
+
+        goomba->x = &goomba->fond.x;
+        goomba->y = &goomba->fond.y;
+
+        if(i%2){
+            goomba->orientation = 1;
+        }
+        else{
+            goomba->orientation = -1;
+        }
+
+        goomba->texture = SDL_CreateTextureFromSurface(renderer, surfaceGoomba);
+        SDL_Rect rectGoomba = {positionsGoombas[i], 235, 40, 40};
+        goomba->fond = rectGoomba;
+        tableauGoombas[i] = goomba;
+    }
 
     SDL_free(surfaceMario);
  
@@ -190,19 +208,17 @@ int main(int argc, char** argv){
         SDL_RenderCopy(renderer, textureFond, NULL, &fond3);
         SDL_RenderCopy(renderer, textureFondBleu, NULL, &rectFondBleu);
         SDL_RenderCopy(renderer, textureMario, NULL, &mario->rect);
-        SDL_RenderCopy(renderer, textureGoomba, NULL, &goomba);
 
+        for(int i = 0; i < nombreGoombas; i++){
+            SDL_RenderCopy(renderer, tableauGoombas[i]->texture, NULL, &(tableauGoombas[i]->fond));
+        }
+        
         for(int i = 0; i < nombreBlocs; i++){
             SDL_RenderCopy(renderer, tableauBlocs[i]->texture, NULL, &(tableauBlocs[i]->fond));
         }
 
         SDL_RenderPresent(renderer);
         SDL_RenderClear(renderer);
-
-
-        if(SDL_HasIntersection(&mario->rect, &goomba)){
-            fprintf(stderr, "Personnage touché\n");
-        }
 
         SDL_PollEvent(&event);
 
@@ -267,8 +283,12 @@ int main(int argc, char** argv){
                     fond.x -= 10;
                     fond2.x -= 10;
                     fond3.x -= 10;
-                    goomba.x -= 10;
                     rectFondBleu.x -= 10;
+
+                    for(int i = 0; i < nombreGoombas; i++){
+                        *tableauGoombas[i]->x -= 10;
+                    }
+
                     for(int i = 0; i < nombreBlocs; i++){
                         *tableauBlocs[i]->x -= 10;
                     }
@@ -321,8 +341,12 @@ int main(int argc, char** argv){
                     fond.x += 10;
                     fond2.x += 10;
                     fond3.x += 10;
-                    goomba.x += 10;
                     rectFondBleu.x += 10;
+
+                    for(int i = 0; i < nombreGoombas; i++){
+                        *tableauGoombas[i]->x += 10;
+                    }
+
                     for(int i = 0; i <  nombreBlocs; i++){
                         *tableauBlocs[i]->x += 10;
                     }
@@ -420,6 +444,7 @@ int main(int argc, char** argv){
                 mario->jumpCount -= 1;
 
                 if(!(mario->indiceBlock == -1)){
+                    nombreBlocsBriques -= 1;
                     tabTemporaire = change_size(tableauBlocs, &nombreBlocs, mario->indiceBlock);
 
                     free(tableauBlocs[mario->indiceBlock]);
@@ -456,6 +481,28 @@ int main(int argc, char** argv){
             endOfJump = false;
         }
 
+        for(int i = 0; i < nombreGoombas; i++){
+           *tableauGoombas[i]->x += tableauGoombas[i]->orientation * 3;
+       }
+
+
+        for(int i = 0; i < nombreGoombas; i++){
+            for(int j = 0; j < nombreBlocsPierres; j++){
+                if(SDL_HasIntersection(&(tableauGoombas[i]->fond), &(tableauBlocs[j + nombreBlocsChances + nombreBlocsBriques]->fond))){
+                    tableauGoombas[i]->orientation *= -1;
+                }
+                else if(*tableauGoombas[i]->x < fond.x){
+                    tableauGoombas[i]->orientation *= -1;
+                    *tableauGoombas[i]->x += tableauGoombas[i]->orientation * 3;
+                }
+                else if(*tableauGoombas[i]->x + 40 > fond3.x + 900){
+                    tableauGoombas[i]->orientation *= -1;
+                    *tableauGoombas[i]->x += tableauGoombas[i]->orientation * 3;
+                }
+            }
+        }
+
+
         SDL_Delay(30);
         
     }
@@ -464,6 +511,11 @@ int main(int argc, char** argv){
         free(tableauBlocs[i]);
     }
     free(tableauBlocs);
+
+    for(int i = 0; i < nombreGoombas; i++){
+        free(tableauGoombas[i]);
+    }
+    free(tableauGoombas);
 
     SDL_DestroyTexture(textureMario);
     free(mario);
