@@ -25,7 +25,6 @@ bool menu()
 
     SDL_Event event;
 
-
     while(menu)
     {
         SDL_PollEvent(&event);
