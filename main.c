@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <math.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
+#include "musique.h"
 #include "menu.h"
 #include "fin.h"
 #include "personnage.h"
@@ -85,7 +87,24 @@ int main(int argc, char** argv){
     mario->isWalkingLeft = false;
     mario->isWalkingRight = false;
 
-    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+
+    if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) == -1) //Initialisation de l'API Mixer
+    {
+      printf("%s", Mix_GetError());
+      return -1;
+    }
+
+    Mix_Music *musique;
+    musique = Mix_LoadMUS("src/music.wav");
+
+    if(musique == NULL)
+    {
+        fprintf(stderr,"%s", Mix_GetError());
+        return -1;
+    }
+    Mix_VolumeMusic(MIX_MAX_VOLUME / 2);
+    Mix_PlayMusic(musique, -1);
 
     continuer = menu();
 
@@ -233,13 +252,11 @@ int main(int argc, char** argv){
         SDL_RenderCopy(renderer, textureFond, NULL, &fond3);
         SDL_RenderCopy(renderer, textureFondBleu, NULL, &rectFondBleu);
 
-        for(int i = 0; i < nombreGoombas; i++){
+        for(int i = 0; i < nombreGoombas; i++)
             SDL_RenderCopy(renderer, tableauGoombas[i]->texture, NULL, &(tableauGoombas[i]->fond));
-        }
-        
-        for(int i = 0; i < nombreBlocs; i++){
+
+        for(int i = 0; i < nombreBlocs; i++)
             SDL_RenderCopy(renderer, tableauBlocs[i]->texture, NULL, &(tableauBlocs[i]->fond));
-        }
 
         SDL_RenderCopy(renderer, textureMario, NULL, &mario->rect);
 
@@ -412,7 +429,7 @@ int main(int argc, char** argv){
 
         //GESTION MORT DANS LE VIDE ET COLLISIONS GOOMBA
 
-        if(SDL_HasIntersection(&(mario->rect), &rectFondBleu))
+        if(SDL_HasIntersection(&(mario->rect), &rectFondBleu) && !mario->mort)
             mario->mort = true;
 
         if(!mario->mort){
@@ -429,8 +446,8 @@ int main(int argc, char** argv){
                         SDL_FreeSurface(surfaceGoomba);
                     }
                     else{
-                    mario->isJumping = true;
-                    mario->mort = true;
+                        mario->isJumping = true;
+                        mario->mort = true;
                     }
 
                 }
@@ -599,13 +616,15 @@ int main(int argc, char** argv){
 
        }
 
-        if(mario->mort && *mario->y >= 400){
-            continuer = false;
-            game_over = true;
+        if(mario->mort){
+            run_music(&musique, "src/mario_dead.wav");
+            if(*mario->y > 400){
+                continuer = false;
+                game_over = true;
+            }
         }
 
         SDL_Delay(30);
-        
     }
 
     //LIBERATION DE LA MEMOIRE
@@ -631,6 +650,8 @@ int main(int argc, char** argv){
     if(game_over)
         fin();
 
+    Mix_FreeMusic(musique);
+    Mix_CloseAudio();
     SDL_Quit();
 
     return 0;
