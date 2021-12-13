@@ -8,8 +8,10 @@ typedef struct personnage
     SDL_Rect rect;
     int *x;
     int *y;
+    bool mort;
     int orientation;
     SDL_Rect *block;
+    int indiceGoomba;
     int indiceBlock;
     int jumpCount;
     int stepCount;
