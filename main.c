@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <math.h>
 #include <SDL2/SDL.h>
+#include "menu.h"
+#include "fin.h"
 #include "personnage.h"
 #include "goomba.h"
 #include "bloc.h"
@@ -26,6 +28,8 @@ int main(int argc, char** argv){
 
     SDL_Window *window = NULL;
 
+    bool game_over = false;
+    bool mort = false;
     int valeur;
     Bloc **tabTemporaire;
     bool endOfJump = false;
@@ -64,6 +68,8 @@ int main(int argc, char** argv){
     mario->isWalkingRight = false;
 
     SDL_Init(SDL_INIT_VIDEO);
+
+    continuer = menu();
 
     //Initialisation de la fenetre
     window = SDL_CreateWindow(
@@ -502,6 +508,24 @@ int main(int argc, char** argv){
             }
         }
 
+        if(SDL_HasIntersection(&(mario->rect), &rectFondBleu)){
+            mort = true;
+        }
+
+        if(mort){
+            SDL_DestroyTexture(textureMario);
+            surfaceMario = SDL_LoadBMP("src/mario_dead.bmp");
+            SDL_DestroyTexture(textureMario);
+            textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
+            SDL_FreeSurface(surfaceMario);
+            *mario->y += 10;
+            if(*mario->y >= 400)
+            {
+                continuer = false;
+                game_over = true;
+            }
+        }
+
 
         SDL_Delay(30);
         
@@ -522,6 +546,10 @@ int main(int argc, char** argv){
     SDL_DestroyTexture(textureFond);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+
+    if(game_over)
+        fin();
+
     SDL_Quit();
 
     return 0;
