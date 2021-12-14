@@ -26,21 +26,6 @@ Goomba **change_size2(Goomba **tab, int *taille, int indice){
     return tab2;
 }
 
-Bloc **change_size(Bloc **tab, int *taille, int indice){
-    *taille -= 1;
-    Bloc **tab2 = malloc(sizeof(Bloc *) * *taille);
-    int j = 0;
-
-    for(int i = 0; i < *taille + 1; i++){
-        if(!(i == indice)){
-            tab2[j] = tab[i];
-            j++;
-        }
-    }
-
-    return tab2;
-}
-
 int main(int argc, char** argv){
 
     SDL_Window *window = NULL;
@@ -110,7 +95,7 @@ int main(int argc, char** argv){
 
     //Initialisation de la fenetre
     window = SDL_CreateWindow(
-                                "Super Brechi", SDL_WINDOWPOS_UNDEFINED,
+                                "Super ZenMa Bros", SDL_WINDOWPOS_UNDEFINED,
                                 SDL_WINDOWPOS_UNDEFINED,
                                 800,
                                 300,
@@ -151,7 +136,7 @@ int main(int argc, char** argv){
     fond3.w = 1200;
 
     SDL_Surface *surfaceMario = SDL_LoadBMP("src/mario_droite.bmp");
-    SDL_Texture *textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
+    mario->texture = SDL_CreateTextureFromSurface(renderer, surfaceMario);
     SDL_Rect dest = {0, 0, 50, 50};
     mario->rect = dest;
     mario->x = &mario->rect.x;
@@ -258,7 +243,7 @@ int main(int argc, char** argv){
         for(int i = 0; i < nombreBlocs; i++)
             SDL_RenderCopy(renderer, tableauBlocs[i]->texture, NULL, &(tableauBlocs[i]->fond));
 
-        SDL_RenderCopy(renderer, textureMario, NULL, &mario->rect);
+        SDL_RenderCopy(renderer, mario->texture, NULL, &mario->rect);
 
         SDL_RenderPresent(renderer);
         SDL_RenderClear(renderer);
@@ -344,16 +329,16 @@ int main(int argc, char** argv){
 
                 if(mario->isJumping == false){
                     if(mario->stepCount%4 == 0 || mario->stepCount%4 == 1){
-                        SDL_DestroyTexture(textureMario);
+                        SDL_DestroyTexture(mario->texture);
                         surfaceMario = SDL_LoadBMP("src/mario_droite.bmp");
-                        textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
+                        mario->texture = SDL_CreateTextureFromSurface(renderer, surfaceMario);
                         SDL_FreeSurface(surfaceMario);
                         mario->stepCount++;
                     }
                     else if(mario->stepCount%4 == 2 || mario->stepCount%4 == 3){
-                        SDL_DestroyTexture(textureMario);
+                        SDL_DestroyTexture(mario->texture);
                         surfaceMario = SDL_LoadBMP("src/mario_droite1.bmp");
-                        textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
+                        mario->texture = SDL_CreateTextureFromSurface(renderer, surfaceMario);
                         SDL_FreeSurface(surfaceMario);
                         mario->stepCount++;
                     }
@@ -398,17 +383,17 @@ int main(int argc, char** argv){
                 if(mario->isJumping == false){
                     if (mario->stepCount%2 == 0)
                     {
-                        SDL_DestroyTexture(textureMario);
+                        SDL_DestroyTexture(mario->texture);
                         surfaceMario = SDL_LoadBMP("src/mario_gauche.bmp");
-                        textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
+                        mario->texture = SDL_CreateTextureFromSurface(renderer, surfaceMario);
                         SDL_FreeSurface(surfaceMario);
                         mario->stepCount++;
                     }
                     else if (mario->stepCount%2 == 1)
                     {
-                        SDL_DestroyTexture(textureMario);
+                        SDL_DestroyTexture(mario->texture);
                         surfaceMario = SDL_LoadBMP("src/mario_gauche1.bmp");
-                        textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
+                        mario->texture = SDL_CreateTextureFromSurface(renderer, surfaceMario);
                         SDL_FreeSurface(surfaceMario);
                         mario->stepCount++;
                     }
@@ -456,108 +441,8 @@ int main(int argc, char** argv){
 
         //GESTION SAUT
 
-        if(mario->isJumping){
-            neg = 1;
-            if(mario->jumpCount < 0)
-                neg = -1;
-
-
-            valeur = (pow(mario->jumpCount, 2))*0.5 * neg;
-            *mario->y -= valeur;
-
-            //GESTION COLLISIONS
-
-            if(mario->jumpCount < 0){
-                if(*mario->y  > 230 && !mario->mort){
-                        endOfJump = true;
-                        *mario->y = 230;
-                }
-
-                for(int i = 0; i < nombreBlocs; i++){
-                    if(SDL_HasIntersection(&mario->rect, &(tableauBlocs[i]->fond)) && !mario->mort){
-                        endOfJump = true;
-                        *mario->y = *tableauBlocs[i]->y - mario->rect.h;
-                        mario->block = &tableauBlocs[i]->fond;
-                    }
-                }
-            }
-            else{
-                for(int i = 0; i < nombreBlocs; i++){
-                    if(SDL_HasIntersection(&mario->rect, &(tableauBlocs[i]->fond)) && !mario->mort){
-                        if(*mario->y <= *tableauBlocs[i]->y + 35 && *mario->y >= *tableauBlocs[i]->y){
-                            mario->jumpCount = -1;
-                            *mario->y = *tableauBlocs[i]->y + 35;
-                            if(tableauBlocs[i]->type == 2)
-                                mario->indiceBlock = i;
-                        }
-                    }
-                }
-            }
-                
-            if(!endOfJump){
-                if(!mario->mort){
-                    if(mario->orientation == 1){
-                        SDL_DestroyTexture(textureMario);
-                        surfaceMario = SDL_LoadBMP("src/mario_saut_droit.bmp");
-                        textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
-                        SDL_FreeSurface(surfaceMario);
-                    }
-                    else if(mario->orientation == -1){
-                        SDL_DestroyTexture(textureMario);
-                        surfaceMario = SDL_LoadBMP("src/mario_saut_gauche.bmp");
-                        textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
-                        SDL_FreeSurface(surfaceMario);
-                    }
-                }
-                else{
-                    SDL_DestroyTexture(textureMario);
-                    surfaceMario = SDL_LoadBMP("src/mario_dead.bmp");
-                    SDL_DestroyTexture(textureMario);
-                    textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
-                    SDL_FreeSurface(surfaceMario);
-                }
-
-                mario->jumpCount -= 1;
-
-                //Si mario a touché un bloc pierre <==> mario->indiceBlock != -1
-                if(!(mario->indiceBlock == -1)){
-                    nombreBlocsBriques -= 1;
-                    tabBlocsTemporaire = change_size(tableauBlocs, &nombreBlocs, mario->indiceBlock);
-
-                    free(tableauBlocs[mario->indiceBlock]);
-                    free(tableauBlocs);
-
-                    tableauBlocs = malloc(sizeof(Bloc *) * nombreBlocs);
-
-                    for(int i = 0; i < nombreBlocs; i++)
-                        tableauBlocs[i] = tabBlocsTemporaire[i];
-
-                    free(tabBlocsTemporaire);
-                    mario->indiceBlock = -1;
-                }
-            }
-        }
-
-        if(endOfJump){
-            mario->isJumping = false;
-            mario->jumpCount = 9;
-
-            if(mario->orientation == 1){
-                SDL_DestroyTexture(textureMario);
-                surfaceMario = SDL_LoadBMP("src/mario_droite.bmp");
-                textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
-                SDL_FreeSurface(surfaceMario);
-            }
-            else if(mario->orientation == -1){
-                SDL_DestroyTexture(textureMario);
-                surfaceMario = SDL_LoadBMP("src/mario_gauche.bmp");
-                textureMario = SDL_CreateTextureFromSurface(renderer, surfaceMario);
-                SDL_FreeSurface(surfaceMario);
-            }
-
-            endOfJump = false;
-        }
-
+        Jump(mario, &nombreBlocs, &tableauBlocs, &nombreBlocsBriques, renderer);
+        
         //DEPLACEMENTS GOOMBA
 
         for(int i = 0; i < nombreGoombas; i++){
@@ -639,7 +524,7 @@ int main(int argc, char** argv){
     }
     free(tableauGoombas);
 
-    SDL_DestroyTexture(textureMario);
+    SDL_DestroyTexture(mario->texture);
     free(mario);
     SDL_DestroyTexture(textureFond);
     SDL_DestroyRenderer(renderer);
