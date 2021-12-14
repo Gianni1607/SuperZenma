@@ -8,7 +8,7 @@ void fin()
 {
     bool cont = true;
     SDL_Window *window_fin = NULL;
-    window_fin = SDL_CreateWindow("Super Brechi : FIN", SDL_WINDOWPOS_CENTERED,
+    window_fin = SDL_CreateWindow("Super ZenMa : FIN", SDL_WINDOWPOS_CENTERED,
                                                                 SDL_WINDOWPOS_CENTERED,
                                                                 512,
                                                                 301,
