@@ -7,6 +7,8 @@
 #include "musique.h"
 #include "menu.h"
 #include "fin.h"
+#include "win.h"
+#include "poteau.h"
 #include "personnage.h"
 #include "goomba.h"
 #include "bloc.h"
@@ -30,13 +32,13 @@ int main(int argc, char** argv){
 
     SDL_Window *window = NULL;
 
+    bool endGame = false;
     bool game_over = false;
     int valeur;
     Bloc **tabBlocsTemporaire;
     Goomba **tabGoombasTemporaire;
     bool endOfJump = false;
     int neg = 1;
-    int j = 0;
     int continuer = 1;
     int nextYPosition;
     int nombreBlocsChances = 6;
@@ -54,14 +56,16 @@ int main(int argc, char** argv){
     int positionsBlocsBriques[3] = {350, 400, 500};
     int positionsBlocsPierresX[20] = {1600, 1635, 1670, 1705, 1635, 1670, 1705, 1670, 1705, 1705, 1960, 1960, 1995, 1960, 1995, 2030, 1960, 1995, 2030, 2065};
     int positionsBlocsPierresY[20] = {240, 240, 240, 240, 205, 205, 205, 170, 170, 135, 135, 170, 170, 205, 205, 205, 240, 240, 240, 240}; 
-    int positionsGoombas[5] = {200, 400, 1000, 2300, 3000};
+    int positionsGoombas[5] = {200, 400, 1000, 2300, 2600};
 
     Perso *mario;
     mario = malloc(sizeof(Perso));
 
     SDL_Rect rectNull = {-1, -1, -1, -1}; //Rect qui sert de bloc par défaut quand mario n'est pas sur un bloc (chance, brique, etc.) ; sol != bloc
     mario->mort = false;
+    mario->end = false;
     mario->block = &rectNull;
+    mario->waitingCount = 0;
     mario->indiceGoomba = -1;
     mario->indiceBlock = -1;
     mario->orientation = 1;
@@ -81,6 +85,7 @@ int main(int argc, char** argv){
     }
 
     Mix_Music *musique;
+    Mix_Chunk *son;
     musique = Mix_LoadMUS("src/music.wav");
 
     if(musique == NULL)
@@ -228,14 +233,47 @@ int main(int argc, char** argv){
     SDL_FreeSurface(surfaceFondBleu);
     SDL_Rect rectFondBleu = {1740, 240, 220, 70};
 
+    Poteau *poteauFin = malloc(sizeof(Poteau));
+    poteauFin->xPoteau = &poteauFin->poteau.x;
+    poteauFin->yPoteau = &poteauFin->poteau.y;
+    poteauFin->xDrapeau = &poteauFin->drapeau.x;
+    poteauFin->yDrapeau = &poteauFin->drapeau.y;
+
+    SDL_Rect poteau = {2900, 35, 30, 240};
+    SDL_Rect drapeau = {2875, 50, 40, 35};
+    poteauFin->poteau = poteau;
+    poteauFin->drapeau = drapeau;
+
+    SDL_Surface *surfacePoteau = SDL_LoadBMP("src/poteau.bmp");
+    poteauFin->texturePoteau = SDL_CreateTextureFromSurface(renderer, surfacePoteau);
+    SDL_FreeSurface(surfacePoteau);
+
+    SDL_Surface *surfaceDrapeau = SDL_LoadBMP("src/drapeau.bmp");
+    poteauFin->textureDrapeau = SDL_CreateTextureFromSurface(renderer, surfaceDrapeau);
+    SDL_FreeSurface(surfaceDrapeau);
+
+    SDL_Surface *surfaceChateauGauche = SDL_LoadBMP("src/chateau_gauche.bmp");
+    SDL_Texture *textureChateauGauche = SDL_CreateTextureFromSurface(renderer, surfaceChateauGauche);
+    SDL_FreeSurface(surfaceChateauGauche);
+    SDL_Rect rectChateauGauche = {3100, 107, 100, 170};
+
+    SDL_Surface *surfaceChateauDroit = SDL_LoadBMP("src/chateau_droit.bmp");
+    SDL_Texture *textureChateauDroit = SDL_CreateTextureFromSurface(renderer, surfaceChateauDroit);
+    SDL_FreeSurface(surfaceChateauDroit);
+    SDL_Rect rectChateauDroit = {3200, 107, 100, 170};
+
 
     while (continuer)
     {
+        //AFFICHAGE ELEMENTS
 
         SDL_RenderCopy(renderer, textureFond, NULL, &fond);
         SDL_RenderCopy(renderer, textureFond, NULL, &fond2);
         SDL_RenderCopy(renderer, textureFond, NULL, &fond3);
         SDL_RenderCopy(renderer, textureFondBleu, NULL, &rectFondBleu);
+        SDL_RenderCopy(renderer, poteauFin->texturePoteau, NULL, &(poteauFin->poteau));
+        SDL_RenderCopy(renderer, poteauFin->textureDrapeau, NULL, &(poteauFin->drapeau));
+        SDL_RenderCopy(renderer, textureChateauGauche, NULL, &rectChateauGauche);
 
         for(int i = 0; i < nombreGoombas; i++)
             SDL_RenderCopy(renderer, tableauGoombas[i]->texture, NULL, &(tableauGoombas[i]->fond));
@@ -245,10 +283,14 @@ int main(int argc, char** argv){
 
         SDL_RenderCopy(renderer, mario->texture, NULL, &mario->rect);
 
+        SDL_RenderCopy(renderer, textureChateauDroit, NULL, &rectChateauDroit);
+
         SDL_RenderPresent(renderer);
         SDL_RenderClear(renderer);
 
         SDL_PollEvent(&event);
+
+        //GESTION EVENEMENTS
 
         switch(event.type)
         {
@@ -260,11 +302,13 @@ int main(int argc, char** argv){
                 switch(event.key.keysym.sym)
                 {
                     case SDLK_RIGHT:
-                        mario->isWalkingRight = true;
+                        if(!mario->end)
+                            mario->isWalkingRight = true;
                         break;
                     
                     case SDLK_LEFT:
-                        mario->isWalkingLeft = true;
+                        if(!mario->end)
+                            mario->isWalkingLeft = true;
                         break;
                     
                     case SDLK_ESCAPE:
@@ -272,7 +316,7 @@ int main(int argc, char** argv){
                         break;
                     
                     case SDLK_UP:
-                        if(mario->isJumping == false)
+                        if(mario->isJumping == false && !mario->end)
                             mario->isJumping = true;
                         break;
                     
@@ -291,6 +335,8 @@ int main(int argc, char** argv){
                 }
                 break;
         }
+
+        //DEPLACEMENT MARIO DROITE
 
         if(mario->isWalkingRight == true && !mario->mort){
             *mario->x += 10;
@@ -311,6 +357,10 @@ int main(int argc, char** argv){
                     fond2.x -= 10;
                     fond3.x -= 10;
                     rectFondBleu.x -= 10;
+                    *poteauFin->xPoteau -= 10;
+                    *poteauFin->xDrapeau -= 10;
+                    rectChateauDroit.x -= 10;
+                    rectChateauGauche.x -= 10;
 
                     for(int i = 0; i < nombreGoombas; i++){
                         *tableauGoombas[i]->x -= 10;
@@ -346,6 +396,8 @@ int main(int argc, char** argv){
             }        
         }
 
+        //DEPLACEMENT MARIO GAUCHE
+
         if(mario->isWalkingLeft == true && !mario->mort){
             *mario->x -= 10;
 
@@ -366,6 +418,10 @@ int main(int argc, char** argv){
                     fond2.x += 10;
                     fond3.x += 10;
                     rectFondBleu.x += 10;
+                    *poteauFin->xPoteau += 10;
+                    *poteauFin->xDrapeau += 10;
+                    rectChateauDroit.x += 10;
+                    rectChateauGauche.x += 10;
 
                     for(int i = 0; i < nombreGoombas; i++)
                         *tableauGoombas[i]->x += 10;
@@ -414,15 +470,23 @@ int main(int argc, char** argv){
 
         //GESTION MORT DANS LE VIDE ET COLLISIONS GOOMBA
 
-        if(SDL_HasIntersection(&(mario->rect), &rectFondBleu) && !mario->mort)
+        if(SDL_HasIntersection(&(mario->rect), &rectFondBleu) && !mario->mort && !mario->end)
             mario->mort = true;
 
-        if(!mario->mort){
+        if(!mario->mort && !mario->end){
             for(int i = 0; i < nombreGoombas; i++){
                 goombaCollision = tableauGoombas[i];
                 if(SDL_HasIntersection(&(mario->rect), &(goombaCollision->fond)) && !(goombaCollision->mort)){
                     if(mario->isJumping && mario->jumpCount < 0){
+                        mario->jumpCount = 5;
                         goombaCollision->mort = true;
+                        son = Mix_LoadWAV("src/kick.wav");
+                        Mix_VolumeChunk(son, MIX_MAX_VOLUME);
+                        Mix_PlayChannel(-1, son, 0);
+                        //Mix_FreeChunk(son);
+                        //run_music(&musique, "src/kick.wav", false);
+
+
                         SDL_DestroyTexture(goombaCollision->texture);
                         surfaceGoomba = SDL_LoadBMP("src/goomba_mort.bmp");
                         goombaCollision->texture = SDL_CreateTextureFromSurface(renderer, surfaceGoomba);
@@ -437,6 +501,55 @@ int main(int argc, char** argv){
 
                 }
             }
+        }
+
+
+        //GESTION COLLISION DRAPEAU
+        if(SDL_HasIntersection(&(mario->rect), &(poteauFin->poteau)) && !mario->end){
+            if(mario->isJumping){
+                mario->isWalkingLeft = false;
+                mario->isWalkingRight = false;
+                mario->isJumping = false;
+                mario->end = true;
+                run_music(&musique, "src/stage_clear.wav", true);
+            }
+            else if(mario->isWalkingRight){
+                *mario->x -= 10;
+            }
+            else if(mario->isWalkingLeft){
+                *mario->x += 10;
+            }
+        }
+
+        if(mario->end){
+            if(poteauFin->waitingCount < 55){
+                poteauFin->drapeau.y += 3;
+                poteauFin->waitingCount++;
+            }
+            if(*mario->y < 210)
+                *mario->y += 3;
+            else if(poteauFin->waitingCount >= 55){
+                if(poteauFin->waitingCount == 55){
+                    mario->jumpCount = 10;
+                    mario->isJumping = true;
+                    mario->isWalkingRight = true;
+                }
+                poteauFin->waitingCount++;
+            }
+
+            if(*mario->x > rectChateauGauche.x + rectChateauGauche.w + 40)
+                mario->isWalkingRight = false;
+
+            if(poteauFin->waitingCount == 150){
+                son = Mix_LoadWAV("src/fireworks.wav");
+                Mix_VolumeChunk(son, MIX_MAX_VOLUME/2);
+                Mix_PlayChannel(-1, son, 3);
+            }
+            else if(poteauFin->waitingCount == 200){
+                continuer = false;
+                endGame = true;
+            }
+
         }
 
         //GESTION SAUT
@@ -467,6 +580,7 @@ int main(int argc, char** argv){
                 tableauGoombas[i]->waitingCount++;
                 if(tableauGoombas[i]->waitingCount == 20){
                     mario->indiceGoomba = i;
+                    Mix_FreeChunk(son);
                 }
             }
 
@@ -478,14 +592,14 @@ int main(int argc, char** argv){
                     tableauGoombas[i]->orientation *= -1;
                     *tableauGoombas[i]->x += tableauGoombas[i]->orientation * 3;
                 }
-                else if(*tableauGoombas[i]->x + 40 > fond3.x + 900){
+                else if(SDL_HasIntersection((&tableauGoombas[i]->fond), &poteauFin->poteau)){
                     tableauGoombas[i]->orientation *= -1;
                     *tableauGoombas[i]->x += tableauGoombas[i]->orientation * 3;
                 }
             }
-       }
+        }
 
-       if(!(mario->indiceGoomba == -1)){
+        if(!(mario->indiceGoomba == -1)){
             tabGoombasTemporaire = change_size2(tableauGoombas, &nombreGoombas, mario->indiceGoomba);
 
             free(tableauGoombas[mario->indiceGoomba]);
@@ -499,11 +613,15 @@ int main(int argc, char** argv){
             free(tabGoombasTemporaire);
             mario->indiceGoomba = -1;
 
-       }
+        }
+
+        //GESTION MORT
 
         if(mario->mort){
-            run_music(&musique, "src/mario_dead.wav");
-            if(*mario->y > 400){
+            if(mario->waitingCount == 0)
+                run_music(&musique, "src/mario_dead.wav", true);
+            mario->waitingCount++;
+            if(mario->waitingCount == 90){
                 continuer = false;
                 game_over = true;
             }
@@ -530,10 +648,16 @@ int main(int argc, char** argv){
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
 
+    if(endGame){
+        win();
+    }
+
     //ECRAN DE GAME OVER
 
-    if(game_over)
+    if(game_over){
+        run_music(&musique, "src/gameover.wav", true);
         fin();
+    }
 
     Mix_FreeMusic(musique);
     Mix_CloseAudio();

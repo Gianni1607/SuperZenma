@@ -1,6 +1,7 @@
 #ifndef PERSONNAGE_H
 #define PERSONNAGE_H
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 #include <stdbool.h>
 #include "bloc.h"
 
@@ -10,9 +11,11 @@ typedef struct personnage
     int *x;
     int *y;
     bool mort;
+    bool end;
     int orientation;
     SDL_Rect *block;
     SDL_Texture *texture;
+    int waitingCount;
     int indiceGoomba;
     int indiceBlock;
     int jumpCount;
