@@ -9,7 +9,7 @@ bool menu()
     int continuer = 0;
     int menu = 1;
     SDL_Window *windowMenu = NULL;
-    windowMenu = SDL_CreateWindow("Super Brechi : MENU", SDL_WINDOWPOS_CENTERED,
+    windowMenu = SDL_CreateWindow("Super ZenMa Bros : MENU", SDL_WINDOWPOS_CENTERED,
                                                                 SDL_WINDOWPOS_CENTERED,
                                                                 996,
                                                                 372,
