@@ -25,7 +25,7 @@ void win()
 
     while(cont) //boucle infinie
     {
-        SDL_PollEvent(&event);
+        SDL_WaitEvent(&event);
 
         switch(event.type) //récupère les events
         {
