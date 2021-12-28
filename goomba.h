@@ -1,7 +1,6 @@
 #ifndef GOOMBA_H
 #define GOOMBA_H
 #include <SDL2/SDL.h>
-#include "bloc.h"
 
 typedef struct Goomba{ //définition struct de goomba
     SDL_Rect fond;
@@ -14,6 +13,34 @@ typedef struct Goomba{ //définition struct de goomba
     int *y;
 
 } Goomba;
+
+#include "personnage.h"
+#include "bloc.h"
+#include "poteau.h"
+#include "fond.h"
+
+Goomba *initGoomba(SDL_Renderer *renderer, int x, int y, int w, int h, int orientation, char path[255]){
+    Goomba *goomba;
+    goomba = malloc(sizeof(Goomba));
+
+    goomba->x = &goomba->fond.x;
+    goomba->y = &goomba->fond.y;
+
+    SDL_Rect rectGoomba = {x, y, w, h};
+    goomba->fond = rectGoomba;
+
+    goomba->mort = false;
+    goomba->waitingCount = 0;
+    goomba->stepCount = 0;
+    goomba->orientation = orientation;
+    
+    SDL_Surface *surfaceGoomba = SDL_LoadBMP(path);
+    goomba->texture = SDL_CreateTextureFromSurface(renderer, surfaceGoomba);
+    SDL_FreeSurface(surfaceGoomba);
+
+    return goomba;
+}
+
 
 Goomba **change_size2(Goomba ***tab, int *taille, int indice){
     *taille -= 1;
@@ -31,7 +58,7 @@ Goomba **change_size2(Goomba ***tab, int *taille, int indice){
 }
 
 
-void moveGoomba(Goomba ***tableauGoombas, Bloc ***tableauBlocs, int *nombreGoombas, Perso *mario, Poteau *poteauFin, SDL_Renderer *renderer, SDL_Rect fond, Mix_Chunk *son, int *nombreBlocsPierres, int *nombreBlocsChances, int *nombreBlocsBriques){
+void moveGoomba(Goomba ***tableauGoombas, Bloc ***tableauBlocs, int *nombreGoombas, Perso *mario, Poteau *poteauFin, SDL_Renderer *renderer, Fond *background, Mix_Chunk *son, int *nombreBlocsPierres, int *nombreBlocsChances, int *nombreBlocsBriques){
     Goomba **tabGoombasTemporaire;
 
     for(int i = 0; i < *nombreGoombas; i++){
@@ -64,7 +91,7 @@ void moveGoomba(Goomba ***tableauGoombas, Bloc ***tableauBlocs, int *nombreGoomb
             if(SDL_HasIntersection(&((*tableauGoombas)[i]->fond), &((*tableauBlocs)[j + *nombreBlocsChances + *nombreBlocsBriques]->fond))){
                 (*tableauGoombas)[i]->orientation *= -1;
             }
-            else if(*(*tableauGoombas)[i]->x < fond.x){
+            else if(*(*tableauGoombas)[i]->x < background->compteur){ //WTF genre pourquoi faire ça dans la boucle avec les blocs pierre mon frere + revoit ta condition pour le début de la map genre *goomba->x > -(background->compteur * 1200)
                 (*tableauGoombas)[i]->orientation *= -1;
                 *(*tableauGoombas)[i]->x += (*tableauGoombas)[i]->orientation * 3;
             }

@@ -1,6 +1,5 @@
 #ifndef AFFICHAGE_H
 #define AFFICHAGE_H
-
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 #include "personnage.h"
@@ -52,7 +51,7 @@ void affichage(SDL_Renderer *renderer,Fond *background, int WINDOW_W, int WINDOW
     for(int i = 0; i < nombreItems; i++)
         SDL_RenderCopy(renderer, tableauItems[i]->texture, NULL, &(tableauItems[i]->fond));
 
-    SDL_RenderCopy(renderer, mario->texture, NULL, &mario->rect);
+    SDL_RenderCopy(renderer, mario->texture, NULL, &mario->fond);
 
     SDL_RenderCopy(renderer, chateau->textureDroite, NULL, &(chateau->chateauDroit));
 

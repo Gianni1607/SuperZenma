@@ -5,8 +5,8 @@
 			"label": "Compile with SDL2 and SDL_mixer",
 			"type": "shell",
 			"command": "gcc '${file}' -o '${fileDirname}/${fileBasenameNoExtension}' -I include -L lib -lSDL2 -lSDL2_mixer && '${fileDirname}/${fileBasenameNoExtension}' && echo $1",
-			"args": []
-
+			"args": [],
+			"problemMatcher": []
 		},
 		{
 			"label": "Compile with SDL2",

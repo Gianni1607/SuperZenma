@@ -1,7 +1,6 @@
 #ifndef POTEAU_H
 #define POTEAU_H
 #include <SDL2/SDL.h>
-#include "personnage.h"
 
 typedef struct Poteau{ //définition struct de poteau
     SDL_Texture *texturePoteau;
@@ -14,13 +13,37 @@ typedef struct Poteau{ //définition struct de poteau
     int *xDrapeau;
     int *yDrapeau;
 
-
 } Poteau;
+
+#include "personnage.h"
+
+Poteau *initPoteau(SDL_Renderer *renderer, int x, int y, int w, int h, char pathPoteau[255], char pathDrapeau[255]){
+    Poteau *poteauFin = malloc(sizeof(Poteau));
+    poteauFin->xPoteau = &poteauFin->poteau.x;
+    poteauFin->yPoteau = &poteauFin->poteau.y;
+    poteauFin->xDrapeau = &poteauFin->drapeau.x;
+    poteauFin->yDrapeau = &poteauFin->drapeau.y;
+
+    SDL_Rect poteau = {x, y, w, h};
+    SDL_Rect drapeau = {x - 25, y + 15, (w / 30) * 40, (h / 240) * 35};
+    poteauFin->poteau = poteau;
+    poteauFin->drapeau = drapeau;
+
+    SDL_Surface *surfacePoteau = SDL_LoadBMP(pathPoteau);
+    poteauFin->texturePoteau = SDL_CreateTextureFromSurface(renderer, surfacePoteau);
+    SDL_FreeSurface(surfacePoteau);
+
+    SDL_Surface *surfaceDrapeau = SDL_LoadBMP(pathDrapeau);
+    poteauFin->textureDrapeau = SDL_CreateTextureFromSurface(renderer, surfaceDrapeau);
+    SDL_FreeSurface(surfaceDrapeau);
+
+    return poteauFin;
+}
 
 
 void collisionPoteau(Perso *mario, Poteau *poteauFin, Mix_Music **musique, Mix_Chunk *son, SDL_Rect rectChateauGauche, bool *continuer, bool *endGame){
 
-    if(SDL_HasIntersection(&(mario->rect), &(poteauFin->poteau)) && !mario->end){
+    if(SDL_HasIntersection(&(mario->fond), &(poteauFin->poteau)) && !mario->end){
         if(mario->isJumping && *mario->y < 225){
             mario->isWalkingLeft = false;
             mario->isWalkingRight = false;
